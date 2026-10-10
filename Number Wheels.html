@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Number Wheels</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#e6ecf2;--fg:#14202e;--mut:#5d6b7c;--card:#f7f9fb;--line:#c5d0dc;--ac:#2a55d4;--acfg:#fff;--drum:#13213a;--digit:#f1ede0}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e151f;--fg:#e6ecf4;--mut:#93a1b3;--card:#17202d;--line:#2c3a4d;--ac:#6f93ff;--acfg:#0e151f;--drum:#0a1220}}
+:root[data-theme="dark"]{--bg:#0e151f;--fg:#e6ecf4;--mut:#93a1b3;--card:#17202d;--line:#2c3a4d;--ac:#6f93ff;--acfg:#0e151f;--drum:#0a1220}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:0 auto;padding:28px 20px 40px}
+h1{font:700 clamp(28px,6vw,40px)/1.1 Georgia,"Times New Roman",serif;margin:0 0 8px;letter-spacing:-.01em}
+p.lead{color:var(--mut);margin:0 0 24px;max-width:46ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+label,.lab{display:block;font-weight:600;margin:0 0 8px}
+.hint{color:var(--mut);font-size:14px;margin:6px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+button{font:inherit;cursor:pointer;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+button:hover{border-color:var(--ac)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.chip[aria-pressed="true"]{background:var(--ac);color:var(--acfg);border-color:var(--ac)}
+input[type=number]{font:inherit;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.field{margin-bottom:22px}
+.step{display:flex;gap:8px;align-items:center}
+.step input{text-align:center;width:90px}
+.step button{width:44px;font-size:20px;padding:6px}
+.go{width:100%;background:var(--ac);color:var(--acfg);border-color:var(--ac);font-weight:700;padding:13px;font-size:17px}
+.go:hover{filter:brightness(1.08)}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.bezel{background:linear-gradient(180deg,#9aa7b6,#5c6978);padding:12px;border-radius:20px;overflow:hidden}
+.row{display:flex;justify-content:center;gap:6px;background:#050a14;padding:6px;border-radius:12px}
+.col{display:flex;flex-direction:column;align-items:center}
+.wheel{position:relative;width:var(--w);height:calc(var(--h)*3);overflow:hidden;background:var(--drum);border-radius:8px;touch-action:none;cursor:ns-resize;user-select:none;-webkit-user-select:none}
+.wheel::before,.wheel::after{content:"";position:absolute;left:0;right:0;height:var(--h);z-index:2;pointer-events:none}
+.wheel::before{top:0;background:linear-gradient(#050a14,transparent)}
+.wheel::after{bottom:0;background:linear-gradient(transparent,#050a14)}
+.win{position:absolute;left:0;right:0;top:var(--h);height:var(--h);border-top:2px solid var(--ac);border-bottom:2px solid var(--ac);z-index:3;pointer-events:none;opacity:.7}
+.it{position:absolute;left:0;right:0;top:0;height:var(--h);display:flex;align-items:center;justify-content:center;color:var(--digit);font:700 calc(var(--h)*.62)/1 ui-monospace,Menlo,Consolas,monospace;will-change:transform}
+.pv{margin-top:8px;text-align:center;font-size:12px;color:var(--mut);line-height:1.25}
+.pv b{display:block;color:var(--fg);font-size:13px}
+.read{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.read div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.read span{display:block;color:var(--mut);font-size:13px}
+.read strong{display:block;font:700 22px/1.3 ui-monospace,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.tip{color:var(--mut);font-size:14px;margin-top:14px}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style></head>
+<body><main>
+
+<section id="p1">
+  <h1>Number wheels</h1>
+  <p class="lead">Build a wheel counter in any number base and show how counting rolls over from one place to the next.</p>
+  <div class="card">
+    <div class="field">
+      <span class="lab">Number base</span>
+      <div class="chips" id="chips">
+        <button class="chip" data-b="2">Binary (2)</button>
+        <button class="chip" data-b="8">Octal (8)</button>
+        <button class="chip" data-b="10">Decimal (10)</button>
+        <button class="chip" data-b="16">Hexadecimal (16)</button>
+      </div>
+      <label for="base" class="hint" style="margin:0 0 6px">Or type any base from 2 to 36</label>
+      <input id="base" type="number" min="2" max="36" value="10" inputmode="numeric">
+    </div>
+    <div class="field">
+      <span class="lab">Number of digits</span>
+      <div class="step">
+        <button id="dm" aria-label="Fewer digits">−</button>
+        <input id="nd" type="number" min="1" max="8" value="4" inputmode="numeric" aria-label="Number of digits">
+        <button id="dp" aria-label="More digits">+</button>
+      </div>
+      <p class="hint">1 to 8 wheels.</p>
+    </div>
+    <button class="go" id="go">Continue</button>
+  </div>
+</section>
+
+<section id="p2" hidden>
+  <div class="bar">
+    <button id="back">Change base</button>
+    <button id="reset">Reset to zero</button>
+  </div>
+  <div class="bezel"><div class="row" id="row"></div></div>
+  <p class="tip">Drag any wheel up or down, or scroll over it. Wheels to its left carry or borrow when it rolls past its highest or lowest digit.</p>
+  <div class="read">
+    <div><span id="rl1">Base 10 value</span><strong id="r1">0</strong></div>
+    <div><span>Decimal value</span><strong id="r2">0</strong></div>
+  </div>
+</section>
+</main>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var B=10,N=4,V=0,H=64,wheels=[],drag=null,busy=false,SYM="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var clamp=function(x,a,b){return Math.max(a,Math.min(b,x))};
+function pw(i){return Math.pow(B,i)}
+
+/* page 1 */
+function readBase(){return clamp(Math.round(+$("base").value)||10,2,36)}
+function readN(){return clamp(Math.round(+$("nd").value)||1,1,8)}
+function chips(){var b=readBase();document.querySelectorAll(".chip").forEach(function(c){c.setAttribute("aria-pressed",+c.dataset.b===b)})}
+document.querySelectorAll(".chip").forEach(function(c){c.onclick=function(){$("base").value=c.dataset.b;chips()}});
+$("base").oninput=chips;
+$("dm").onclick=function(){$("nd").value=clamp(readN()-1,1,8)};
+$("dp").onclick=function(){$("nd").value=clamp(readN()+1,1,8)};
+$("go").onclick=function(){B=readBase();N=readN();$("base").value=B;$("nd").value=N;V=0;build();$("p1").hidden=true;$("p2").hidden=false;window.scrollTo(0,0)};
+$("back").onclick=function(){$("p2").hidden=true;$("p1").hidden=false;chips()};
+$("reset").onclick=function(){if(V!==0)slide(0)};
+chips();
+
+/* page 2 */
+function build(){
+  var row=$("row");row.innerHTML="";wheels=[];
+  var w=clamp(Math.floor((Math.min(window.innerWidth,720)-90)/N)-6,34,84);
+  H=Math.round(clamp(w*.95,40,70));
+  row.style.setProperty("--w",w+"px");row.style.setProperty("--h",H+"px");
+  for(var i=N-1;i>=0;i--){
+    var col=document.createElement("div");col.className="col";
+    var wh=document.createElement("div");wh.className="wheel";wh.setAttribute("role","slider");
+    var items=[];
+    for(var t=0;t<5;t++){var d=document.createElement("div");d.className="it";wh.appendChild(d);items.push(d)}
+    var win=document.createElement("div");win.className="win";wh.appendChild(win);
+    var pv=document.createElement("div");pv.className="pv";
+    pv.innerHTML="<b>"+B+"<sup>"+i+"</sup></b>"+(i<=5?pw(i).toLocaleString():"");
+    col.appendChild(wh);col.appendChild(pv);row.appendChild(col);
+    wheels[i]={el:wh,items:items};
+    attach(wh,i);
+  }
+  $("rl1").textContent="Base "+B+" value";
+  render();
+}
+function draw(i,p){
+  var w=wheels[i],f=Math.floor(p);
+  for(var t=0;t<5;t++){
+    var j=f-1+t,y=(j-p)*H,d=Math.abs(j-p),el=w.items[t];
+    el.textContent=SYM[((j%B)+B)%B];
+    el.style.transform="translateY("+(y+H)+"px) scale("+(1-.12*Math.min(d,2))+")";
+    el.style.opacity=Math.max(0,1-.5*d);
+  }
+}
+function render(){
+  var qv=V;
+  for(var i=0;i<N;i++){
+    var p;
+    if(drag){
+      var q=drag.q,k=drag.k;
+      if(i<k)p=Math.floor(V0(i,drag.start));
+      else if(i===k)p=((q%B)+B)%B;
+      else p=Math.floor(q/pw(i-k))%B;
+    }else p=Math.floor(V/pw(i))%B;
+    draw(i,p);
+  }
+  var cur=drag?drag.q*pw(drag.k)+drag.low:V;
+  cur=Math.round(cur);
+  var s="";for(var i=N-1;i>=0;i--)s+=SYM[Math.floor(cur/pw(i))%B];
+  $("r1").textContent=s;$("r2").textContent=cur.toLocaleString();
+  for(var i=0;i<N;i++)wheels[i].el.setAttribute("aria-valuenow",Math.floor(cur/pw(i))%B);
+}
+function V0(i,s){return (s/pw(i))%B}
+
+function begin(k){
+  var q0=Math.floor(V/pw(k));
+  drag={k:k,q:q0,q0:q0,start:V,low:V-q0*pw(k),max:pw(N-k)-1};
+}
+function finish(){
+  var r=Math.round(drag.q);V=r*pw(drag.k)+drag.low;drag=null;render();
+}
+function slide(target){ /* animate whole value to target (reset) */
+  if(busy)return;busy=true;
+  var from=V,t0=performance.now(),dur=350;
+  (function step(now){
+    var u=clamp((now-t0)/dur,0,1),e=1-Math.pow(1-u,3);
+    V=Math.round(from+(target-from)*e);render();
+    if(u<1)requestAnimationFrame(step);else{V=target;busy=false;render()}
+  })(t0);
+}
+function settle(to){
+  busy=true;var from=drag.q,t0=performance.now(),dur=160;
+  (function step(now){
+    var u=clamp((now-t0)/dur,0,1),e=1-Math.pow(1-u,3);
+    drag.q=from+(to-from)*e;render();
+    if(u<1)requestAnimationFrame(step);else{drag.q=to;finish();busy=false}
+  })(t0);
+}
+function attach(el,k){
+  var y0=0,on=false;
+  el.addEventListener("pointerdown",function(e){
+    if(busy)return;on=true;y0=e.clientY;el.setPointerCapture(e.pointerId);begin(k);
+  });
+  el.addEventListener("pointermove",function(e){
+    if(!on)return;
+    drag.q=clamp(drag.q0+(y0-e.clientY)/H,0,drag.max);render();
+  });
+  function up(){if(!on)return;on=false;settle(clamp(Math.round(drag.q),0,drag.max))}
+  el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);
+  el.addEventListener("wheel",function(e){
+    e.preventDefault();if(busy||on)return;
+    begin(k);settle(clamp(drag.q0+(e.deltaY>0?1:-1),0,drag.max));
+  },{passive:false});
+}
+window.addEventListener("resize",function(){if(!$("p2").hidden&&!drag&&!busy)build()});
+})();
+</script>
+<footer style="position: absolute; bottom: 0; width: 100%; text-align: center; padding: 20px; background: #17202d; font-family:'Courier New', Courier, monospace">Build by <a href="https://instagram.com/srayan007" target="_blank" style="color: #6f94ff; text-decoration: none;">Shan Abrar Srayan</a> to Demonstrate Number System</footer>
+</body>
+</html>
